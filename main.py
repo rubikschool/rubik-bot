@@ -53,7 +53,7 @@ class HealthcheckHandler(BaseHTTPRequestHandler):
 
 def start_healthcheck_server() -> None:
     server = HTTPServer(("0.0.0.0", 8080), HealthcheckHandler)
-    logger.info(f"Healthcheck server listening on 0.0.0.0: 8080")
+    logger.info("Healthcheck server listening on 0.0.0.0: 8080")
     server.serve_forever()
 
 
@@ -69,19 +69,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message or not update.message.text:
         return
 
-    # Check if the message is in a group
-    if update.message.chat.type not in ["group", "supergroup"]:
+    # Check if the message is in a forum group
+    if (
+        update.message.chat.type not in ["group", "supergroup"]
+        or not update.message.chat.is_forum
+    ):
         return
 
-    # Check if it's a forum group with topics
-    if update.message.chat.is_forum:
-        # In forum groups, only respond in topics
-        if not (
-            hasattr(update.message, "message_thread_id")
-            and update.message.message_thread_id
-        ):
-            return
-    # For regular groups, respond to all messages
+    # Check if it's in the specific topic (thread_id = 93)
+    if not (
+        hasattr(update.message, "message_thread_id")
+        and update.message.message_thread_id == 93
+    ):
+        return
+
+    # Check if the bot is mentioned in the message
+    bot_username = context.bot.username
+    if not bot_username or f"@{bot_username}" not in update.message.text:
+        return
 
     user_prompt = update.message.text
     chat_id = update.message.chat_id
