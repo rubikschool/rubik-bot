@@ -8,3 +8,5 @@ services:
     restart: unless-stopped
     volumes:
       - ./.env:/app/.env:ro
+    ports:
+      - "8080:8080"

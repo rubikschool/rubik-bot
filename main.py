@@ -2,6 +2,8 @@ import os
 import logging
 import asyncio
 from io import BytesIO
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Thread
 
 import google.generativeai as genai
 from telegram import Update
@@ -30,6 +32,29 @@ if not TELEGRAM_BOT_TOKEN or not GOOGLE_API_KEY:
     )
 
 genai.configure(api_key=GOOGLE_API_KEY)
+
+
+class HealthcheckHandler(BaseHTTPRequestHandler):
+    """Minimal HTTP handler for Cloud Run health checks."""
+
+    def do_GET(self):  # noqa: N802 (keep method name for BaseHTTPRequestHandler)
+        if self.path in ("/ready", "/"):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b"ok")
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, format, *args):  # silence default verbose logging
+        return
+
+
+def start_healthcheck_server() -> None:
+    server = HTTPServer(("0.0.0.0", 8080), HealthcheckHandler)
+    logger.info(f"Healthcheck server listening on 0.0.0.0: 8080")
+    server.serve_forever()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -114,6 +139,9 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def main() -> None:
     """Start the bot."""
+    # Start lightweight HTTP server for Cloud Run health checks
+    Thread(target=start_healthcheck_server, daemon=True).start()
+
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
