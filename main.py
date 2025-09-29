@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 IMAGE_GENERATION_TOPIC_NAME = "Image generation"
+RUBIK_EASTER_EGG = "Rubik School"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -100,11 +101,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Check if the bot is mentioned in the message
     bot_username = context.bot.username
-    if not bot_username or f"@{bot_username}" not in update.message.text:
+    if f"@{bot_username}" not in update.message.text:
         return
 
     chat_id = update.message.chat_id
     thread_id = update.message.message_thread_id
+
+    logger.info(
+        f"Received message from {update.message.from_user.username} in chat {chat_id}, thread {thread_id}: {update.message.text}"
+    )
 
     # Check if the message is from an allowed group and topic
     if not (
@@ -112,15 +117,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         and chat_id in allowed_threads
         and thread_id in allowed_threads.get(chat_id, set())
     ):
-        logger.info(
-            f"Message from {update.message.from_user.username} in chat {chat_id}, thread {thread_id} is not from an allowed group and topic"
-        )
+        logger.warning("Message is not from an allowed group and topic")
         return
 
-    user_prompt = update.message.text
+    user_prompt = update.message.text.replace(f"@{bot_username}", "").strip()
     user_name = update.message.from_user.username or "User"
-
-    logger.info(f"Received prompt from {user_name} in {chat_id}: {user_prompt}")
 
     try:
         await update.message.reply_text(f"{user_name}, 🎨 generating image...")
@@ -129,7 +130,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         response = await asyncio.to_thread(
             model.generate_content,
-            f"Generate an image based on this prompt: {user_prompt}",
+            f"Generate an image based on this prompt: {user_prompt}, add a small easter-egg-style caption: {RUBIK_EASTER_EGG}",
             generation_config=genai.types.GenerationConfig(
                 temperature=0.7,
             ),
