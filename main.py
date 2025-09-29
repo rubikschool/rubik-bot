@@ -98,6 +98,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message or not update.message.text:
         return
 
+    # Check if the bot is mentioned in the message
+    bot_username = context.bot.username
+    if not bot_username or f"@{bot_username}" not in update.message.text:
+        return
+
     chat_id = update.message.chat_id
     thread_id = update.message.message_thread_id
 
@@ -107,11 +112,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         and chat_id in allowed_threads
         and thread_id in allowed_threads.get(chat_id, set())
     ):
-        return
-
-    # Check if the bot is mentioned in the message
-    bot_username = context.bot.username
-    if not bot_username or f"@{bot_username}" not in update.message.text:
+        logger.info(
+            f"Message from {update.message.from_user.username} in chat {chat_id}, thread {thread_id} is not from an allowed group and topic"
+        )
         return
 
     user_prompt = update.message.text
