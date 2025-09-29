@@ -1,0 +1,24 @@
+{
+  "allowed_groups": [
+    {
+      "group_name": "Ideas",
+      "group_id": -1002809503513,
+      "topics": [
+        {
+          "topic_name": "Image generation",
+          "thread_id": 93
+        }
+      ]
+    },
+    {
+      "group_name": "Another Group",
+      "group_id": -1009876543210,
+      "topics": [
+        {
+          "topic_name": "Image generation",
+          "thread_id": 42
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import json
 from io import BytesIO
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
@@ -18,10 +19,38 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+IMAGE_GENERATION_TOPIC_NAME = "Image generation"
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+allowed_threads = {}
+
+
+def load_config():
+    """Load and parse the groups_config.json file."""
+    global allowed_threads
+    try:
+        with open("groups_config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+            allowed_groups = config.get("allowed_groups", [])
+            for group in allowed_groups:
+                group_id = group.get("group_id")
+                if group_id:
+                    allowed_threads[group_id] = set()
+                    for topic in group.get("topics", []):
+                        if topic.get("topic_name") == IMAGE_GENERATION_TOPIC_NAME:
+                            thread_id = topic.get("thread_id")
+                            if thread_id:
+                                allowed_threads[group_id].add(thread_id)
+            logger.info(f"Loaded config for allowed threads: {allowed_threads}")
+    except FileNotFoundError:
+        logger.error("groups_config.json not found.")
+    except json.JSONDecodeError:
+        logger.error("Error decoding groups_config.json.")
+
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -69,17 +98,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message or not update.message.text:
         return
 
-    # Check if the message is in a forum group
-    if (
-        update.message.chat.type not in ["group", "supergroup"]
-        or not update.message.chat.is_forum
-    ):
-        return
+    chat_id = update.message.chat_id
+    thread_id = update.message.message_thread_id
 
-    # Check if it's in the specific topic (thread_id = 93)
+    # Check if the message is from an allowed group and topic
     if not (
-        hasattr(update.message, "message_thread_id")
-        and update.message.message_thread_id == 93
+        thread_id
+        and chat_id in allowed_threads
+        and thread_id in allowed_threads.get(chat_id, set())
     ):
         return
 
@@ -89,7 +115,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     user_prompt = update.message.text
-    chat_id = update.message.chat_id
     user_name = update.message.from_user.username or "User"
 
     logger.info(f"Received prompt from {user_name} in {chat_id}: {user_prompt}")
@@ -146,6 +171,8 @@ def main() -> None:
     """Start the bot."""
     # Start lightweight HTTP server for Cloud Run health checks
     Thread(target=start_healthcheck_server, daemon=True).start()
+
+    load_config()
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
