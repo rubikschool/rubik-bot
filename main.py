@@ -54,14 +54,14 @@ def load_config():
 
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not TELEGRAM_BOT_TOKEN or not GOOGLE_API_KEY:
+if not TELEGRAM_BOT_TOKEN or not GEMINI_API_KEY:
     raise ValueError(
-        "Please set TELEGRAM_BOT_TOKEN and GOOGLE_API_KEY in your .env file"
+        "Please set TELEGRAM_BOT_TOKEN and GEMINI_API_KEY in your .env file"
     )
 
-genai.configure(api_key=GOOGLE_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
 
 
 class HealthcheckHandler(BaseHTTPRequestHandler):
