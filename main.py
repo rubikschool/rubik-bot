@@ -53,11 +53,20 @@ def load_config():
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
-if not TELEGRAM_BOT_TOKEN or not GEMINI_API_KEY:
-    raise ValueError(
-        "Please set TELEGRAM_BOT_TOKEN and GEMINI_API_KEY in your .env file"
-    )
+
+if not TELEGRAM_BOT_TOKEN:
+    logger.error("TELEGRAM_BOT_TOKEN environment variable is not set")
+    raise ValueError("TELEGRAM_BOT_TOKEN environment variable is required")
+
+if not GEMINI_API_KEY:
+    logger.error("GEMINI_API_KEY environment variable is not set")
+    raise ValueError("GEMINI_API_KEY environment variable is required")
+
+if not WEBHOOK_URL:
+    logger.error("WEBHOOK_URL environment variable is not set")
+    raise ValueError("WEBHOOK_URL environment variable is required")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -151,7 +160,6 @@ def main() -> None:
     load_config()
 
     # Get webhook URL from environment (will be set after first deploy)
-    webhook_url = os.getenv("WEBHOOK_URL")
     port = int(os.getenv("PORT", "8080"))
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -163,14 +171,14 @@ def main() -> None:
     application.add_error_handler(error_handler)
 
     logger.info(f"Starting bot with webhook on port {port}")
-    logger.info(f"Webhook URL: {webhook_url}")
+    logger.info(f"Webhook URL: {WEBHOOK_URL}")
 
     # Run webhook server
     application.run_webhook(
         listen="0.0.0.0",
         port=port,
         url_path="telegram",
-        webhook_url=f"{webhook_url}/telegram" if webhook_url else None,
+        webhook_url=f"{WEBHOOK_URL}/telegram",
         allowed_updates=Update.ALL_TYPES,
     )
 
