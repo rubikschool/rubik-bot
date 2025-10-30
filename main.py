@@ -1,7 +1,6 @@
 import os
 import logging
 import asyncio
-import json
 from io import BytesIO
 
 import google.generativeai as genai
@@ -24,32 +23,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-allowed_threads = {}
-
-
-def load_config():
-    """Load and parse the groups_config.json file."""
-    global allowed_threads
-    try:
-        with open("groups_config.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
-            allowed_groups = config.get("allowed_groups", [])
-            for group in allowed_groups:
-                group_id = group.get("group_id")
-                if group_id:
-                    allowed_threads[group_id] = set()
-                    for topic in group.get("topics", []):
-                        if topic.get("topic_name") == IMAGE_GENERATION_TOPIC_NAME:
-                            thread_id = topic.get("thread_id")
-                            if thread_id:
-                                allowed_threads[group_id].add(thread_id)
-            logger.info(f"Loaded config for allowed threads: {allowed_threads}")
-    except FileNotFoundError:
-        logger.error("groups_config.json not found.")
-    except json.JSONDecodeError:
-        logger.error("Error decoding groups_config.json.")
-
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -95,13 +68,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         f"Received message from {update.message.from_user.username} in chat {chat_id}, thread {thread_id}: {update.message.text}"
     )
 
-    # Check if the message is from an allowed group and topic
-    if not (
-        thread_id
-        and chat_id in allowed_threads
-        and thread_id in allowed_threads.get(chat_id, set())
-    ):
-        logger.warning("Message is not from an allowed group and topic")
+    # Check if the message is from a group (not private chat)
+    if update.message.chat.type == "private":
+        logger.warning("Message is from a private chat, generation not allowed")
         return
 
     user_prompt = update.message.text.replace(f"@{bot_username}", "").strip()
@@ -157,7 +126,6 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def main() -> None:
     """Start the bot with webhook."""
-    load_config()
 
     # Get webhook URL from environment (will be set after first deploy)
     port = int(os.getenv("PORT", "8080"))
