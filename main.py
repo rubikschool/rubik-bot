@@ -21,7 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-GROUPS_CONFIG_PATH = Path(__file__).parent / "groups_config.json"
+GROUPS_CONFIG_PATH = Path(__file__).parent / "src" / "config" / "groups_config.json"
 
 
 def main() -> None:
@@ -29,7 +29,7 @@ def main() -> None:
     webhook_url = os.getenv("WEBHOOK_URL")
 
     application = Application.builder().token(settings.telegram_bot_token).build()
-    application.bot_data[BOT_DATA_IMAGE_SERVICE] = ImageService(settings)
+    application.bot_data[BOT_DATA_IMAGE_SERVICE] = ImageService(settings, GROUPS_CONFIG_PATH)
     application.bot_data[BOT_DATA_ACCESS_CHECKER] = AccessChecker(GROUPS_CONFIG_PATH)
 
     application.add_handler(CommandHandler("start", start))

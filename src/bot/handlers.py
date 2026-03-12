@@ -44,10 +44,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     user_prompt = update.message.text.replace(f"@{bot_username}", "").strip()
     user_name = update.message.from_user.username or "User"
+    user_id = update.message.from_user.id
 
     logger.info(
-        "Generating image for %s in chat %s thread %s: %s",
+        "Generating image for %s (id: %s) in chat %s thread %s: %s",
         user_name,
+        user_id,
         chat_id,
         thread_id,
         user_prompt,
@@ -57,7 +59,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(f"{user_name}, generating image...")
 
         image_service: ImageService = context.bot_data[BOT_DATA_IMAGE_SERVICE]
-        image_bytes = await image_service.generate(user_prompt)
+        image_bytes = await image_service.generate(user_prompt, user_id=user_id)
 
         await update.message.reply_photo(
             photo=image_bytes,

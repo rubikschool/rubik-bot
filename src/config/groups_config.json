@@ -20,5 +20,12 @@
         }
       ]
     }
+  ],
+  "users": [
+    {
+      "tg_id": 63277017,
+      "name": "Sergei Privalov",
+      "easter_egg_text": "AI Forever"
+    }
   ]
 }
