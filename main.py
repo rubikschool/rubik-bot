@@ -1,7 +1,10 @@
 import os
+import json
 import logging
 import asyncio
 from io import BytesIO
+from urllib.request import Request, urlopen
+from urllib.error import URLError
 
 import google.generativeai as genai
 from telegram import Update
@@ -19,15 +22,45 @@ load_dotenv()
 IMAGE_GENERATION_TOPIC_NAME = "Image generation"
 RUBIK_EASTER_EGG = "Rubik School"
 
+METADATA_BASE_URL = "http://metadata.google.internal/computeMetadata/v1"
+METADATA_HEADERS = {"Metadata-Flavor": "Google"}
+METADATA_TIMEOUT_SECONDS = 3
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
+
+def _fetch_metadata(path: str) -> str:
+    req = Request(f"{METADATA_BASE_URL}/{path}", headers=METADATA_HEADERS)
+    with urlopen(req, timeout=METADATA_TIMEOUT_SECONDS) as resp:
+        return resp.read().decode()
+
+
+def _resolve_cloud_run_url() -> str | None:
+    """Auto-detect the Cloud Run service URL via the metadata server and Admin API."""
+    try:
+        project_id = _fetch_metadata("project/project-id")
+        region_path = _fetch_metadata("instance/region")
+        region = region_path.split("/")[-1]
+        service_name = os.getenv("K_SERVICE")
+        if not service_name:
+            return None
+
+        token = json.loads(_fetch_metadata("instance/service-accounts/default/token"))["access_token"]
+
+        api_url = f"https://run.googleapis.com/v2/projects/{project_id}/locations/{region}/services/{service_name}"
+        req = Request(api_url, headers={"Authorization": f"Bearer {token}"})
+        with urlopen(req, timeout=METADATA_TIMEOUT_SECONDS) as resp:
+            return json.loads(resp.read().decode()).get("uri")
+    except (URLError, KeyError, json.JSONDecodeError) as exc:
+        logger.warning("Could not auto-detect Cloud Run service URL: %s", exc)
+        return None
+
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-
 
 if not TELEGRAM_BOT_TOKEN:
     logger.error("TELEGRAM_BOT_TOKEN environment variable is not set")
@@ -36,10 +69,6 @@ if not TELEGRAM_BOT_TOKEN:
 if not GEMINI_API_KEY:
     logger.error("GEMINI_API_KEY environment variable is not set")
     raise ValueError("GEMINI_API_KEY environment variable is required")
-
-if not WEBHOOK_URL:
-    logger.error("WEBHOOK_URL environment variable is not set")
-    raise ValueError("WEBHOOK_URL environment variable is required")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -126,9 +155,11 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def main() -> None:
     """Start the bot with webhook."""
-
-    # Get webhook URL from environment (will be set after first deploy)
     port = int(os.getenv("PORT", "8080"))
+
+    webhook_url = _resolve_cloud_run_url()
+    if not webhook_url:
+        raise RuntimeError("Could not resolve Cloud Run service URL. Deploy to Cloud Run first.")
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -139,14 +170,13 @@ def main() -> None:
     application.add_error_handler(error_handler)
 
     logger.info(f"Starting bot with webhook on port {port}")
-    logger.info(f"Webhook URL: {WEBHOOK_URL}")
+    logger.info(f"Webhook URL: {webhook_url}")
 
-    # Run webhook server
     application.run_webhook(
         listen="0.0.0.0",
         port=port,
         url_path="telegram",
-        webhook_url=f"{WEBHOOK_URL}/telegram",
+        webhook_url=f"{webhook_url}/telegram",
         allowed_updates=Update.ALL_TYPES,
     )
 

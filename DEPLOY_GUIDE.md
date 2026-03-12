@@ -77,10 +77,6 @@ git push origin main
 - Name: `GEMINI_API_KEY`
   - Value: `ваш_ключ_от_Google_AI_Studio`
 
-**Оставьте пока пустым (добавим после деплоя):**
-- Name: `WEBHOOK_URL`
-  - Value: `оставьте пустым` (добавим на шаге 2)
-
 ### 1.8 Настройте доступ
 
 - **Authentication**: выберите **"Allow unauthenticated invocations"**
@@ -102,16 +98,7 @@ git push origin main
 1. Откройте ваш сервис в Cloud Run
 2. Скопируйте **Service URL** (например: `https://telegram-imagen-bot-xxxxx-ew.a.run.app`)
 
-### 2.2 Обновите переменную окружения WEBHOOK_URL
-
-1. В Cloud Run откройте ваш сервис
-2. Нажмите **"EDIT & DEPLOY NEW REVISION"**
-3. Перейдите в **"Variables & Secrets"**
-4. Найдите переменную `WEBHOOK_URL` (или добавьте новую)
-5. Установите значение: `https://telegram-imagen-bot-xxxxx-ew.a.run.app` (ваш Service URL)
-6. Нажмите **"DEPLOY"**
-
-### 2.3 Зарегистрируйте webhook в Telegram
+### 2.2 Зарегистрируйте webhook в Telegram
 
 Откройте браузер и перейдите по URL (замените на свои значения):
 
@@ -177,8 +164,8 @@ https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo
 ## Устранение проблем
 
 ### Webhook не работает:
-1. Проверьте что `WEBHOOK_URL` установлен правильно
-2. Проверьте логи в Cloud Run
+1. Проверьте логи в Cloud Run — там будет ошибка если URL не определился
+2. Убедитесь что сервисный аккаунт имеет роль `roles/run.viewer`
 3. Проверьте webhook info: `/getWebhookInfo`
 4. Удалите webhook и установите заново: `/deleteWebhook` → `/setWebhook`
 
