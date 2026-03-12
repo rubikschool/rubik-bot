@@ -34,6 +34,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     chat_id = update.message.chat_id
     thread_id = update.message.message_thread_id
+    chat_title = update.message.chat.title
+
+    logger.info(
+        "Message received from group_name: '%s', group_id: %s, thread_id: %s",
+        chat_title,
+        chat_id,
+        thread_id,
+    )
 
     access_checker: AccessChecker = context.bot_data[BOT_DATA_ACCESS_CHECKER]
     if not access_checker.is_allowed(chat_id, thread_id):
