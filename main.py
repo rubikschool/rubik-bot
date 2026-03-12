@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 from telegram import Update
@@ -13,7 +14,6 @@ from src.bot.handlers import (
     start,
 )
 from src.config import Settings
-from src.services.cloud_run import resolve_webhook_url
 from src.services.image import ImageService
 
 logging.basicConfig(
@@ -26,14 +26,16 @@ GROUPS_CONFIG_PATH = Path(__file__).parent / "groups_config.json"
 
 def main() -> None:
     settings = Settings.from_env()
-    webhook_url = resolve_webhook_url()
+    webhook_url = os.getenv("WEBHOOK_URL")
 
     application = Application.builder().token(settings.telegram_bot_token).build()
     application.bot_data[BOT_DATA_IMAGE_SERVICE] = ImageService(settings)
     application.bot_data[BOT_DATA_ACCESS_CHECKER] = AccessChecker(GROUPS_CONFIG_PATH)
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
     application.add_error_handler(error_handler)
 
     if webhook_url:
@@ -47,7 +49,9 @@ def main() -> None:
             allowed_updates=Update.ALL_TYPES,
         )
     else:
-        logger.info("No webhook URL found — starting bot in polling mode (local dev)")
+        logger.info(
+            "No webhook URL and no PORT found — starting bot in polling mode (local dev)"
+        )
         application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 

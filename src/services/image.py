@@ -9,7 +9,7 @@ from src.config import Settings
 
 logger = logging.getLogger(__name__)
 
-GENERATION_TEMPERATURE = 0.7
+GENERATION_TEMPERATURE = 1
 
 
 class ImageService:
