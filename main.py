@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 from telegram import Update
@@ -26,10 +25,11 @@ GROUPS_CONFIG_PATH = Path(__file__).parent / "src" / "config" / "groups_config.j
 
 def main() -> None:
     settings = Settings.from_env()
-    webhook_url = os.getenv("WEBHOOK_URL")
 
     application = Application.builder().token(settings.telegram_bot_token).build()
-    application.bot_data[BOT_DATA_IMAGE_SERVICE] = ImageService(settings, GROUPS_CONFIG_PATH)
+    application.bot_data[BOT_DATA_IMAGE_SERVICE] = ImageService(
+        settings, GROUPS_CONFIG_PATH
+    )
     application.bot_data[BOT_DATA_ACCESS_CHECKER] = AccessChecker(GROUPS_CONFIG_PATH)
 
     application.add_handler(CommandHandler("start", start))
@@ -38,14 +38,14 @@ def main() -> None:
     )
     application.add_error_handler(error_handler)
 
-    if webhook_url:
+    if settings.webhook_url:
         logger.info("Starting bot with webhook on port %s", settings.port)
-        logger.info("Webhook URL: %s", webhook_url)
+        logger.info("Webhook URL: %s", settings.webhook_url)
         application.run_webhook(
             listen="0.0.0.0",
             port=settings.port,
             url_path="telegram",
-            webhook_url=f"{webhook_url}/telegram",
+            webhook_url=f"{settings.webhook_url}/telegram",
             allowed_updates=Update.ALL_TYPES,
         )
     else:

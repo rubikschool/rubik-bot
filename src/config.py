@@ -18,6 +18,7 @@ class Settings:
     telegram_bot_token: str
     gemini_api_key: str
     port: int
+    webhook_url: str | None = None
     gemini_model: str = field(default=GEMINI_MODEL)
     logo_path: Path = field(default_factory=lambda: Path(DEFAULT_LOGO_PATH))
     logo_position: str = field(default=DEFAULT_LOGO_POSITION)
@@ -33,6 +34,7 @@ class Settings:
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
         port = int(os.getenv("PORT", str(DEFAULT_PORT)))
+        webhook_url = os.getenv("WEBHOOK_URL")
         logo_path = Path(os.getenv("LOGO_PATH", DEFAULT_LOGO_PATH))
         if not logo_path.is_absolute():
             logo_path = PROJECT_ROOT / logo_path
@@ -42,6 +44,7 @@ class Settings:
             telegram_bot_token=token,
             gemini_api_key=api_key,
             port=port,
+            webhook_url=webhook_url,
             logo_path=logo_path,
             logo_position=logo_position,
         )
