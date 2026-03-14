@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 BOT_DATA_IMAGE_SERVICE = "image_service"
 BOT_DATA_ACCESS_CHECKER = "access_checker"
+BOT_DATA_BOT_MODE = "bot_mode"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -25,31 +26,43 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     bot_username = context.bot.username
-    if f"@{bot_username}" not in update.message.text:
+    is_private = update.message.chat.type == "private"
+    bot_mode = context.bot_data.get(BOT_DATA_BOT_MODE, "group")
+
+    # Проверка режима работы бота
+    if is_private and bot_mode == "group":
+        logger.warning("Ignoring message from private chat (bot mode is 'group')")
+        return
+    elif not is_private and bot_mode == "private":
+        logger.warning("Ignoring message from group chat (bot mode is 'private')")
         return
 
-    if update.message.chat.type == "private":
-        logger.warning("Ignoring message from private chat")
+    # В группах необходимо упоминание бота. В личке — опционально.
+    has_mention = f"@{bot_username}" in update.message.text
+    if not is_private and not has_mention:
         return
 
     chat_id = update.message.chat_id
     thread_id = update.message.message_thread_id
-    chat_title = update.message.chat.title
+    chat_title = update.message.chat.title or "Private Chat"
 
     logger.info(
-        "Message received from group_name: '%s', group_id: %s, thread_id: %s",
+        "Message received from chat_title: '%s', chat_id: %s, thread_id: %s",
         chat_title,
         chat_id,
         thread_id,
     )
 
     access_checker: AccessChecker = context.bot_data[BOT_DATA_ACCESS_CHECKER]
-    if not access_checker.is_allowed(chat_id, thread_id):
+    
+    # Мы пропускаем проверку AccessChecker для личных сообщений
+    if not is_private and not access_checker.is_allowed(chat_id, thread_id):
         logger.warning(
             "Access denied for chat_id=%s thread_id=%s", chat_id, thread_id
         )
         return
 
+    # Убираем упоминание бота (если оно было), чтобы очистить промпт
     user_prompt = update.message.text.replace(f"@{bot_username}", "").strip()
     user_name = update.message.from_user.username or "User"
     user_id = update.message.from_user.id

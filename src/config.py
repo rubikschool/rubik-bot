@@ -22,6 +22,7 @@ class Settings:
     gemini_model: str = field(default=GEMINI_MODEL)
     logo_path: Path = field(default_factory=lambda: Path(DEFAULT_LOGO_PATH))
     logo_position: str = field(default=DEFAULT_LOGO_POSITION)
+    bot_mode: str = field(default="group")
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -39,6 +40,9 @@ class Settings:
         if not logo_path.is_absolute():
             logo_path = PROJECT_ROOT / logo_path
         logo_position = os.getenv("LOGO_POSITION", DEFAULT_LOGO_POSITION)
+        
+        # Режим работы бота: "group" (только группы), "private" (только личка), "both" (и там, и там)
+        bot_mode = os.getenv("BOT_MODE", "group").lower()
 
         return cls(
             telegram_bot_token=token,
@@ -47,4 +51,5 @@ class Settings:
             webhook_url=webhook_url,
             logo_path=logo_path,
             logo_position=logo_position,
+            bot_mode=bot_mode,
         )

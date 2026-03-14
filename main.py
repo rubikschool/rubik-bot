@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from src.bot.access import AccessChecker
 from src.bot.handlers import (
     BOT_DATA_ACCESS_CHECKER,
+    BOT_DATA_BOT_MODE,
     BOT_DATA_IMAGE_SERVICE,
     error_handler,
     handle_message,
@@ -31,6 +32,7 @@ def main() -> None:
         settings, GROUPS_CONFIG_PATH
     )
     application.bot_data[BOT_DATA_ACCESS_CHECKER] = AccessChecker(GROUPS_CONFIG_PATH)
+    application.bot_data[BOT_DATA_BOT_MODE] = settings.bot_mode
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(
