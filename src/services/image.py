@@ -18,7 +18,7 @@ class ImageService:
     def __init__(self, settings: Settings, groups_config_path: Path) -> None:
         self._client = genai.Client(api_key=settings.gemini_api_key)
         self._model_name = settings.gemini_model
-        self._easter_egg = getattr(settings, "easter_egg", "Kubik rubik")
+        self._easter_egg = getattr(settings, "easter_egg", "Rubik School")
         self._users_easter_eggs = self._load_users_config(groups_config_path)
 
     def _load_users_config(self, config_path: Path) -> dict[int, str]:
