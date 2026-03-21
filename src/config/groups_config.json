@@ -48,6 +48,11 @@
   ],
   "users": [
     {
+      "tg_id": 1471605370,
+      "name": "mr_creep0r",
+      "easter_egg_text": "kakashechki"
+    },
+    {
       "tg_id": 63277017,
       "name": "Sergei Privalov",
       "easter_egg_text": "AI Forever"
