@@ -22,11 +22,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Generate an image for tagged messages in allowed groups/topics."""
-    if not update.message:
-        return
-    
-    message_text = update.message.text or update.message.caption
-    if not message_text:
+    if not update.message or not update.message.text:
         return
 
     bot_username = context.bot.username
@@ -42,7 +38,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     # В группах необходимо упоминание бота. В личке — опционально.
-    has_mention = f"@{bot_username}" in message_text
+    has_mention = f"@{bot_username}" in update.message.text
     if not is_private and not has_mention:
         return
 
@@ -67,14 +63,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     # Убираем упоминание бота (если оно было), чтобы очистить промпт
-    user_prompt = message_text.replace(f"@{bot_username}", "").strip()
-    
-    # Формируем "подпись" пользователя (имя пользователя, полное имя или подпись автора в группе)
-    author_signature = update.message.author_signature
-    if author_signature:
-        user_name = f"{update.message.from_user.full_name} ({author_signature})"
-    else:
-        user_name = update.message.from_user.username or update.message.from_user.full_name or "User"
+    user_prompt = update.message.text.replace(f"@{bot_username}", "").strip()
+    user_name = update.message.from_user.username or "User"
     user_id = update.message.from_user.id
 
     logger.info(
