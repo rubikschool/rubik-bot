@@ -41,7 +41,7 @@ class Settings:
             logo_path = PROJECT_ROOT / logo_path
         logo_position = os.getenv("LOGO_POSITION", DEFAULT_LOGO_POSITION)
         
-        # Режим работы бота: "group" (только группы), "private" (только личка), "both" (и там, и там)
+        # Bot mode: "group" (groups only), "private" (DMs only), "both"
         bot_mode = os.getenv("BOT_MODE", "group").lower()
 
         return cls(

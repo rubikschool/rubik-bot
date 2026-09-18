@@ -1,58 +1,58 @@
-# 🤖 Телеграм-бот для создания картинок
+# 🤖 Telegram bot for generating images
 
-Привет! Этот бот умеет рисовать картинки по твоему описанию с помощью нейросети от Google.
+Hi! This bot can draw images from your description using Google’s neural network.
 
-## Что нужно для запуска?
+## What do you need to run it?
 
-Тебе понадобятся два пароля (ключа):
-1. **Токен для телеграм-бота**. Его выдает бот [@BotFather](https://t.me/botfather) в Телеграме.
-2. **Ключ от Google**. Его можно получить на сайте [Google AI Studio](https://aistudio.google.com/).
+You’ll need two keys:
+1. **A Telegram bot token**. You get it from [@BotFather](https://t.me/botfather) in Telegram.
+2. **A Google API key**. You can get it at [Google AI Studio](https://aistudio.google.com/).
 
-## 🚀 Как запустить бота на своем компьютере
+## 🚀 How to run the bot on your computer
 
-### Шаг 1. Настройки
+### Step 1. Configuration
 
-Создай в папке с ботом файл с названием `.env` (обязательно с точкой в начале) и напиши внутри свои ключи вот так:
+In the bot folder, create a file named `.env` (the leading dot is required) and put your keys in it like this:
 
 ```env
-TELEGRAM_BOT_TOKEN=твой_токен_от_телеграма
-GEMINI_API_KEY=твой_ключ_от_google
-# Режим работы бота: "group" (только группы), "private" (только личка) или "both" (и там, и там)
+TELEGRAM_BOT_TOKEN=your_telegram_token
+GEMINI_API_KEY=your_google_key
+# Bot mode: "group" (groups only), "private" (DMs only), or "both"
 BOT_MODE=group
 ```
 
-### Шаг 2. Запуск программы
+### Step 2. Start the program
 
-Открой терминал (командную строку) в папке с ботом и по очереди введи эти команды:
+Open a terminal (command prompt) in the bot folder and run these commands in order:
 
 ```cmd
-# 1. Создаем виртуальное окружение (чтобы ничего не сломать на компьютере)
+# 1. Create a virtual environment (so nothing on your computer breaks)
 python -m venv venv
 
-# 2. Включаем его
+# 2. Activate it
 venv\Scripts\activate
 
-# 3. Скачиваем нужные библиотеки
+# 3. Install the required libraries
 pip install -r requirements.txt
 
-# 4. Запускаем бота!
+# 4. Start the bot!
 python main.py
 ```
 
-🎉 **Готово!** Теперь заходи в Телеграм, пиши своему боту `/start` и проси его нарисовать что-нибудь, например: "рыжий кот летит в космос".
+🎉 **That’s it!** Open Telegram, send `/start` to your bot, and ask it to draw something, for example: "an orange cat flying into space".
 
-### Режимы работы бота (BOT_MODE)
+### Bot modes (BOT_MODE)
 
-В файле `.env` можно настроить, где бот будет отвечать:
-- `BOT_MODE=group` — бот отвечает только в разрешенных группах/топиках (нужно упоминать бота через `@ИмяБота`). Личные сообщения игнорируются.
-- `BOT_MODE=private` — бот отвечает только в личных сообщениях (писать можно без упоминания). Сообщения из групп игнорируются.
-- `BOT_MODE=both` — бот отвечает и в личных сообщениях, и в группах.
+In the `.env` file you can choose where the bot replies:
+- `BOT_MODE=group` — the bot replies only in allowed groups/topics (you must mention it with `@BotName`). Direct messages are ignored.
+- `BOT_MODE=private` — the bot replies only in direct messages (no mention required). Group messages are ignored.
+- `BOT_MODE=both` — the bot replies in both direct messages and groups.
 
-### Как остановить бота
+### How to stop the bot
 
-Если бот запущен в терминале, просто нажми `Ctrl + C` (в Windows/Linux) или `Cmd + C` (в macOS).
+If the bot is running in a terminal, press `Ctrl + C` (Windows/Linux) or `Cmd + C` (macOS).
 
-Если бот был запущен в фоновом режиме на Linux, его можно остановить командой:
+If it was started in the background on Linux, you can stop it with:
 ```bash
 pkill -f "python main.py"
 ```

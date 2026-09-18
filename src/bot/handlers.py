@@ -29,7 +29,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     is_private = update.message.chat.type == "private"
     bot_mode = context.bot_data.get(BOT_DATA_BOT_MODE, "group")
 
-    # Проверка режима работы бота
+    # Enforce the configured bot mode
     if is_private and bot_mode == "group":
         logger.warning("Ignoring message from private chat (bot mode is 'group')")
         return
@@ -37,7 +37,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         logger.warning("Ignoring message from group chat (bot mode is 'private')")
         return
 
-    # В группах необходимо упоминание бота. В личке — опционально.
+    # In groups the bot must be mentioned. In DMs the mention is optional.
     has_mention = f"@{bot_username}" in update.message.text
     if not is_private and not has_mention:
         return
@@ -55,14 +55,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     access_checker: AccessChecker = context.bot_data[BOT_DATA_ACCESS_CHECKER]
     
-    # Мы пропускаем проверку AccessChecker для личных сообщений
+    # Skip AccessChecker for private messages
     if not is_private and not access_checker.is_allowed(chat_id, thread_id):
         logger.warning(
             "Access denied for chat_id=%s thread_id=%s", chat_id, thread_id
         )
         return
 
-    # Убираем упоминание бота (если оно было), чтобы очистить промпт
+    # Strip the bot mention (if present) so the prompt is clean
     user_prompt = update.message.text.replace(f"@{bot_username}", "").strip()
     user_name = update.message.from_user.username or "User"
     user_id = update.message.from_user.id
